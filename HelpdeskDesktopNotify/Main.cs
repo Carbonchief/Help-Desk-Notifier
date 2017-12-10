@@ -19,6 +19,7 @@ namespace HelpdeskDesktopNotify
     {
         string userName = "";
         int MaxValue = 0;
+        bool MinimizedShown = false;
         public Main()
         {
             InitializeComponent();
@@ -30,8 +31,13 @@ namespace HelpdeskDesktopNotify
             {
                 ShowInTaskbar = false;
                 nIcon.Visible = true;
-                nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
-                nIcon.ShowBalloonTip(1000);
+                if (MinimizedShown == false)
+                {
+                    nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
+                    nIcon.ShowBalloonTip(1000);
+                    MinimizedShown = true;
+                }
+            
             }
         }
 
@@ -57,9 +63,9 @@ namespace HelpdeskDesktopNotify
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {           
+        {
             var value = GetData();
-            if (MaxValue < value)
+            if (MaxValue < value && value > 0)
             {
                 nIcon.BalloonTipText = "Call " + value + " has been assign to you. " + userName;
                 nIcon.ShowBalloonTip(1000);
@@ -70,17 +76,25 @@ namespace HelpdeskDesktopNotify
 
         private int GetData()
         {
-
-            using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+            try
             {
-                connection.Open();
-                string query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "'";
-                using (SqlCommand command = new SqlCommand(query, connection))
+
+
+                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
                 {
+                    connection.Open();
+                    string query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "'";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
 
-                    return (int)command.ExecuteScalar();
+                        return (int)command.ExecuteScalar();
 
+                    }
                 }
+            }
+            catch
+            {
+                return 0;
             }
         }
 
