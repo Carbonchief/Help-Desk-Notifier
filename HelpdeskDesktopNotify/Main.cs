@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -37,7 +38,7 @@ namespace HelpdeskDesktopNotify
                     nIcon.ShowBalloonTip(1000);
                     MinimizedShown = true;
                 }
-            
+
             }
         }
 
@@ -68,8 +69,7 @@ namespace HelpdeskDesktopNotify
             if (MaxValue < value && value > 0)
             {
                 nIcon.BalloonTipText = "Call " + value + " has been assign to you. " + userName;
-                nIcon.ShowBalloonTip(1000);
-                MaxValue = value;
+                nIcon.ShowBalloonTip(5000);
                 lblMaxValue.BeginInvoke((MethodInvoker)delegate () { lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString(); ; });
             }
         }
@@ -78,23 +78,46 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-
-
                 using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
                 {
                     connection.Open();
                     string query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "'";
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
-
                         return (int)command.ExecuteScalar();
-
                     }
                 }
             }
             catch
             {
                 return 0;
+            }
+        }
+
+        private DataTable GetDataTable(string SQL)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                {
+                    connection.Open();
+                    string query = SQL;
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+
+                        DataTable t1 = new DataTable();
+                        using (SqlDataAdapter a = new SqlDataAdapter(command))
+                        {
+                            a.Fill(t1);
+                            return t1;
+                        }
+
+                    }
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -109,6 +132,66 @@ namespace HelpdeskDesktopNotify
             ProcessStartInfo sInfo = new ProcessStartInfo("https://helpdesk.raubex.com");
             Process.Start(sInfo);
         }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void enableProxyToolStripMenuItem_Click(object sender, EventArgs e)
+        {           
+
+            RegistryKey ProxyServer = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
+            if (ProxyServer != null)
+            {
+                ProxyServer.SetValue("ProxyServer", GetProxyServer(), RegistryValueKind.String);
+                ProxyServer.Close();
+            }
+           
+            RegistryKey ProxyOverride = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
+            if (ProxyOverride != null)
+            {
+                ProxyOverride.SetValue("ProxyOverride", GetProxyOverride(), RegistryValueKind.String);
+                ProxyOverride.Close();
+            }
+
+            RegistryKey AutoDetect = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
+            if (AutoDetect != null)
+            {
+                AutoDetect.SetValue("AutoDetect", "0", RegistryValueKind.DWord);
+                AutoDetect.Close();
+            }
+
+            RegistryKey ProxyEnable = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
+            if (ProxyEnable != null)
+            {
+                var Enabled = ProxyEnable.GetValue("ProxyEnable").ToString();
+                if(Enabled== "0")
+                {
+                    ProxyEnable.SetValue("ProxyEnable", "1", RegistryValueKind.DWord);
+                    MessageBox.Show("Enabled");
+                }
+                else
+                {
+                    ProxyEnable.SetValue("ProxyEnable", "0", RegistryValueKind.DWord);
+                    MessageBox.Show("Disabled");
+                }                
+                ProxyEnable.Close();
+            }
+
+        }
+
+        public string GetProxyServer()
+        {
+            return "02RX - Proxy01.rbx.raubex.com:8080";
+        }
+
+        public string GetProxyOverride()
+        {
+            return " * rx *; *.raubex.*; 10.*.*.* ";
+        }
+
+
     }
 
 
