@@ -30,51 +30,21 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            this.nIcon = new System.Windows.Forms.NotifyIcon(this.components);
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openHelpdeskToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.lblMaxValue = new System.Windows.Forms.Label();
             this.btnOpenHelpdesk = new System.Windows.Forms.Button();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.lbCalls = new System.Windows.Forms.ListBox();
+            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openHelpdeskToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.enableDisableProxyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.nIcon = new System.Windows.Forms.NotifyIcon(this.components);
+            this.lblCallNr = new System.Windows.Forms.Label();
+            this.txtCallNr = new System.Windows.Forms.TextBox();
+            this.btnSearchCall = new System.Windows.Forms.Button();
+            this.dtpREQ = new System.Windows.Forms.DateTimePicker();
+            this.label1 = new System.Windows.Forms.Label();
             this.contextMenuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
-            // 
-            // nIcon
-            // 
-            this.nIcon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
-            this.nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
-            this.nIcon.BalloonTipTitle = "Helpdesk Notifier";
-            this.nIcon.ContextMenuStrip = this.contextMenuStrip1;
-            this.nIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("nIcon.Icon")));
-            this.nIcon.Text = "Raubex Helpdesk";
-            this.nIcon.BalloonTipClicked += new System.EventHandler(this.nIcon_BalloonTipClicked);
-            this.nIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.nIcon_MouseDoubleClick);
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.exitToolStripMenuItem,
-            this.openHelpdeskToolStripMenuItem,
-            this.enableDisableProxyToolStripMenuItem});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(185, 70);
-            // 
-            // exitToolStripMenuItem
-            // 
-            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.exitToolStripMenuItem.Text = "Exit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
-            // 
-            // openHelpdeskToolStripMenuItem
-            // 
-            this.openHelpdeskToolStripMenuItem.Name = "openHelpdeskToolStripMenuItem";
-            this.openHelpdeskToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.openHelpdeskToolStripMenuItem.Text = "Open Helpdesk";
-            this.openHelpdeskToolStripMenuItem.Click += new System.EventHandler(this.btnOpenHelpdesk_Click);
             // 
             // lblMaxValue
             // 
@@ -95,13 +65,28 @@
             this.btnOpenHelpdesk.UseVisualStyleBackColor = true;
             this.btnOpenHelpdesk.Click += new System.EventHandler(this.btnOpenHelpdesk_Click);
             // 
-            // dataGridView1
+            // lbCalls
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(15, 54);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(645, 496);
-            this.dataGridView1.TabIndex = 2;
+            this.lbCalls.FormattingEnabled = true;
+            this.lbCalls.Location = new System.Drawing.Point(15, 54);
+            this.lbCalls.Name = "lbCalls";
+            this.lbCalls.Size = new System.Drawing.Size(100, 381);
+            this.lbCalls.TabIndex = 2;
+            this.lbCalls.SelectedIndexChanged += new System.EventHandler(this.lbCalls_SelectedIndexChanged);
+            // 
+            // exitToolStripMenuItem
+            // 
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // openHelpdeskToolStripMenuItem
+            // 
+            this.openHelpdeskToolStripMenuItem.Name = "openHelpdeskToolStripMenuItem";
+            this.openHelpdeskToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.openHelpdeskToolStripMenuItem.Text = "Open Helpdesk";
+            this.openHelpdeskToolStripMenuItem.Click += new System.EventHandler(this.btnOpenHelpdesk_Click);
             // 
             // enableDisableProxyToolStripMenuItem
             // 
@@ -110,12 +95,79 @@
             this.enableDisableProxyToolStripMenuItem.Text = "Enable\\Disable Proxy";
             this.enableDisableProxyToolStripMenuItem.Click += new System.EventHandler(this.enableProxyToolStripMenuItem_Click);
             // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.exitToolStripMenuItem,
+            this.openHelpdeskToolStripMenuItem,
+            this.enableDisableProxyToolStripMenuItem});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(185, 70);
+            // 
+            // nIcon
+            // 
+            this.nIcon.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
+            this.nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
+            this.nIcon.BalloonTipTitle = "Helpdesk Notifier";
+            this.nIcon.ContextMenuStrip = this.contextMenuStrip1;
+            this.nIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("nIcon.Icon")));
+            this.nIcon.Text = "Raubex Helpdesk";
+            this.nIcon.BalloonTipClicked += new System.EventHandler(this.nIcon_BalloonTipClicked);
+            this.nIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.nIcon_MouseDoubleClick);
+            // 
+            // lblCallNr
+            // 
+            this.lblCallNr.AutoSize = true;
+            this.lblCallNr.Location = new System.Drawing.Point(121, 54);
+            this.lblCallNr.Name = "lblCallNr";
+            this.lblCallNr.Size = new System.Drawing.Size(34, 13);
+            this.lblCallNr.TabIndex = 4;
+            this.lblCallNr.Text = "Call# ";
+            // 
+            // txtCallNr
+            // 
+            this.txtCallNr.Location = new System.Drawing.Point(209, 51);
+            this.txtCallNr.Name = "txtCallNr";
+            this.txtCallNr.Size = new System.Drawing.Size(100, 20);
+            this.txtCallNr.TabIndex = 5;
+            // 
+            // btnSearchCall
+            // 
+            this.btnSearchCall.Location = new System.Drawing.Point(315, 49);
+            this.btnSearchCall.Name = "btnSearchCall";
+            this.btnSearchCall.Size = new System.Drawing.Size(75, 23);
+            this.btnSearchCall.TabIndex = 6;
+            this.btnSearchCall.Text = "Search";
+            this.btnSearchCall.UseVisualStyleBackColor = true;
+            // 
+            // dtpREQ
+            // 
+            this.dtpREQ.Enabled = false;
+            this.dtpREQ.Location = new System.Drawing.Point(211, 89);
+            this.dtpREQ.Name = "dtpREQ";
+            this.dtpREQ.Size = new System.Drawing.Size(200, 20);
+            this.dtpREQ.TabIndex = 7;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(120, 95);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(85, 13);
+            this.label1.TabIndex = 8;
+            this.label1.Text = "Requested Date";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(672, 562);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.dtpREQ);
+            this.Controls.Add(this.btnSearchCall);
+            this.Controls.Add(this.txtCallNr);
+            this.Controls.Add(this.lblCallNr);
+            this.Controls.Add(this.lbCalls);
             this.Controls.Add(this.btnOpenHelpdesk);
             this.Controls.Add(this.lblMaxValue);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -124,22 +176,25 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             this.contextMenuStrip1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.NotifyIcon nIcon;
         private System.Windows.Forms.Label lblMaxValue;
         private System.Windows.Forms.Button btnOpenHelpdesk;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ListBox lbCalls;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openHelpdeskToolStripMenuItem;
-        private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.ToolStripMenuItem enableDisableProxyToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.NotifyIcon nIcon;
+        private System.Windows.Forms.Label lblCallNr;
+        private System.Windows.Forms.TextBox txtCallNr;
+        private System.Windows.Forms.Button btnSearchCall;
+        private System.Windows.Forms.DateTimePicker dtpREQ;
+        private System.Windows.Forms.Label label1;
     }
 }
 

@@ -7,7 +7,9 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Net.Mail;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -50,10 +52,15 @@ namespace HelpdeskDesktopNotify
         }
 
         private void Form1_Load(object sender, EventArgs e)
-        {
+        {   
             WindowState = FormWindowState.Minimized;
             userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-            MaxValue = GetData();
+            MaxValue = GetLastRequestId();
+            lbCalls.DisplayMember = "id";
+            lbCalls.ValueMember = "id";
+            lbCalls.DataSource = GetRequests();
+
+           
             lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString();
             var timer = new System.Timers.Timer(60000);
 
@@ -65,16 +72,20 @@ namespace HelpdeskDesktopNotify
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            var value = GetData();
+            var value = GetLastRequestId();
+            lbCalls.DisplayMember = "id";
+            lbCalls.ValueMember = "id";
+            lbCalls.DataSource = GetRequests();
             if (MaxValue < value && value > 0)
             {
                 nIcon.BalloonTipText = "Call " + value + " has been assign to you. " + userName;
                 nIcon.ShowBalloonTip(5000);
                 lblMaxValue.BeginInvoke((MethodInvoker)delegate () { lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString(); ; });
+                MaxValue = value;
             }
         }
 
-        private int GetData()
+        private int GetLastRequestId()
         {
             try
             {
@@ -90,7 +101,28 @@ namespace HelpdeskDesktopNotify
             }
             catch
             {
-                return 0;
+                return 0;            }
+        }
+
+        private DataTable GetRequests()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                {
+                    connection.Open();
+                    string query = "SELECT * FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "' and Status <> 3 and deleted = 0 order by id";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        var Data = new DataTable();
+                        Data.Load(command.ExecuteReader());
+                        return Data;                              
+                    }
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -139,59 +171,18 @@ namespace HelpdeskDesktopNotify
         }
 
         private void enableProxyToolStripMenuItem_Click(object sender, EventArgs e)
-        {           
-
-            RegistryKey ProxyServer = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyServer != null)
-            {
-                ProxyServer.SetValue("ProxyServer", GetProxyServer(), RegistryValueKind.String);
-                ProxyServer.Close();
-            }
-           
-            RegistryKey ProxyOverride = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyOverride != null)
-            {
-                ProxyOverride.SetValue("ProxyOverride", GetProxyOverride(), RegistryValueKind.String);
-                ProxyOverride.Close();
-            }
-
-            RegistryKey AutoDetect = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (AutoDetect != null)
-            {
-                AutoDetect.SetValue("AutoDetect", "0", RegistryValueKind.DWord);
-                AutoDetect.Close();
-            }
-
-            RegistryKey ProxyEnable = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyEnable != null)
-            {
-                var Enabled = ProxyEnable.GetValue("ProxyEnable").ToString();
-                if(Enabled== "0")
-                {
-                    ProxyEnable.SetValue("ProxyEnable", "1", RegistryValueKind.DWord);
-                    MessageBox.Show("Enabled");
-                }
-                else
-                {
-                    ProxyEnable.SetValue("ProxyEnable", "0", RegistryValueKind.DWord);
-                    MessageBox.Show("Disabled");
-                }                
-                ProxyEnable.Close();
-            }
-
-        }
-
-        public string GetProxyServer()
         {
-            return "02RX - Proxy01.rbx.raubex.com:8080";
+            Proxy.SetProxy();          
+
         }
 
-        public string GetProxyOverride()
+        private void lbCalls_SelectedIndexChanged(object sender, EventArgs e)
         {
-            return " * rx *; *.raubex.*; 10.*.*.* ";
+            txtCallNr.Text = ((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["id"].ToString();
+            dtpREQ.Value = (DateTime)((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["insert_time"];
+
+            //MessageBox.Show(((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["description"].ToString());
         }
-
-
     }
 
 
