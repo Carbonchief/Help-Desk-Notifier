@@ -1,18 +1,18 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-
+using System.Runtime.InteropServices;
 namespace HelpdeskDesktopNotify
 {
-   public static class Proxy
+    public static class Proxy
     {
-
+        [DllImport("wininet.dll")]
+        public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);
+        public const int INTERNET_OPTION_SETTINGS_CHANGED = 39;
+        public const int INTERNET_OPTION_REFRESH = 37;
+        static bool settingsReturn, refreshReturn;
 
 
         public static void SetProxy()
@@ -44,14 +44,17 @@ namespace HelpdeskDesktopNotify
                 var Enabled = ProxyEnable.GetValue("ProxyEnable").ToString();
                 if (Enabled == "0")
                 {
-                    ProxyEnable.SetValue("ProxyEnable", "1", RegistryValueKind.DWord);                 
+                    ProxyEnable.SetValue("ProxyEnable", "1", RegistryValueKind.DWord);
                 }
                 else
                 {
-                    ProxyEnable.SetValue("ProxyEnable", "0", RegistryValueKind.DWord);                   
+                    ProxyEnable.SetValue("ProxyEnable", "0", RegistryValueKind.DWord);
                 }
                 ProxyEnable.Close();
             }
+            settingsReturn = InternetSetOption(IntPtr.Zero, INTERNET_OPTION_SETTINGS_CHANGED, IntPtr.Zero, 0);
+            refreshReturn = InternetSetOption(IntPtr.Zero, INTERNET_OPTION_REFRESH, IntPtr.Zero, 0);
+
 
         }
 
@@ -62,7 +65,7 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.60;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
                 {
                     connection.Open();
                     string query = "SELECT [pProxyAddress] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIP() + "'";
@@ -100,7 +103,7 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.60;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
                 {
                     connection.Open();
                     string query = "SELECT [pProxyOveride] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIP() + "'";
@@ -111,9 +114,9 @@ namespace HelpdeskDesktopNotify
                     }
                 }
             }
-            catch
+            catch(Exception ex)
             {
-                return null;
+                return "*rx*;*.raubex.*;10.*.*.*";
             }
         }
 

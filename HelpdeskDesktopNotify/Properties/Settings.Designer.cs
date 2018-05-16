@@ -32,5 +32,17 @@ namespace HelpdeskDesktopNotify.Properties {
                 return ((string)(this["RAUBEX_HELPDESKConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowMinimize {
+            get {
+                return ((bool)(this["ShowMinimize"]));
+            }
+            set {
+                this["ShowMinimize"] = value;
+            }
+        }
     }
 }

@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HelpdeskDesktopNotify")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Help-Desk Desktop Notifier")]
+[assembly: AssemblyDescription("This app give notifications to the user when new calls are assigned")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HelpdeskDesktopNotify")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCompany("Raubex PTY")]
+[assembly: AssemblyProduct("Help-Desk Desktop Notifier")]
+[assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

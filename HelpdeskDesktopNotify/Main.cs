@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +23,8 @@ namespace HelpdeskDesktopNotify
     {
         string userName = "";
         int MaxValue = 0;
-        bool MinimizedShown = false;
+        bool IsNetworkAvailable = true;
+
         public Main()
         {
             InitializeComponent();
@@ -34,11 +36,12 @@ namespace HelpdeskDesktopNotify
             {
                 ShowInTaskbar = false;
                 nIcon.Visible = true;
-                if (MinimizedShown == false)
+                if (Properties.Settings.Default.ShowMinimize == true)
                 {
                     nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
                     nIcon.ShowBalloonTip(1000);
-                    MinimizedShown = true;
+                    Properties.Settings.Default.ShowMinimize = false;
+                    Properties.Settings.Default.Save();
                 }
 
             }
@@ -52,7 +55,9 @@ namespace HelpdeskDesktopNotify
         }
 
         private void Form1_Load(object sender, EventArgs e)
-        {   
+        {
+            NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
+            NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged;
             WindowState = FormWindowState.Minimized;
             userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             MaxValue = GetLastRequestId();
@@ -60,7 +65,7 @@ namespace HelpdeskDesktopNotify
             lbCalls.ValueMember = "id";
             lbCalls.DataSource = GetRequests();
 
-           
+
             lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString();
             var timer = new System.Timers.Timer(60000);
 
@@ -68,6 +73,19 @@ namespace HelpdeskDesktopNotify
             timer.Elapsed += Timer_Elapsed;
 
             timer.Enabled = true;
+        }
+
+        private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e)
+        {
+            IsNetworkAvailable = e.IsAvailable;
+        }
+
+        private void NetworkChange_NetworkAddressChanged(object sender, EventArgs e)
+        {
+            if (IsNetworkAvailable)
+            {
+                Proxy.SetProxy();
+            }
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -89,7 +107,7 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
                 {
                     connection.Open();
                     string query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "'";
@@ -101,14 +119,15 @@ namespace HelpdeskDesktopNotify
             }
             catch
             {
-                return 0;            }
+                return 0;
+            }
         }
 
         private DataTable GetRequests()
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
                 {
                     connection.Open();
                     string query = "SELECT * FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "' and Status <> 3 and deleted = 0 order by id";
@@ -116,7 +135,7 @@ namespace HelpdeskDesktopNotify
                     {
                         var Data = new DataTable();
                         Data.Load(command.ExecuteReader());
-                        return Data;                              
+                        return Data;
                     }
                 }
             }
@@ -130,7 +149,7 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
                 {
                     connection.Open();
                     string query = SQL;
@@ -172,8 +191,7 @@ namespace HelpdeskDesktopNotify
 
         private void enableProxyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Proxy.SetProxy();          
-
+            Proxy.SetProxy();
         }
 
         private void lbCalls_SelectedIndexChanged(object sender, EventArgs e)
