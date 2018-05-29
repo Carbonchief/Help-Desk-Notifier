@@ -1,53 +1,45 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Net;
-using System.Net.Mail;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Principal;
 using System.Timers;
 using System.Windows.Forms;
-
+using HelpdeskDesktopNotify.Properties;
+using Timer = System.Timers.Timer;
 
 namespace HelpdeskDesktopNotify
 {
     public partial class Main : Form
     {
-        string userName = "";
-        int MaxValue = 0;
-        bool IsNetworkAvailable = true;
+        private const string V = "Notifier has been minimized to System Tray";
+
+        public string UserName { get; set; } = "";
+        public int MaxValue { get; set; }
+        public bool IsNetworkAvailable { get; set; } = true;
 
         public Main()
         {
             InitializeComponent();
+
+            NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
+            NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged;
         }
 
         private void Form1_Resize(object sender, EventArgs e)
         {
-            if (WindowState == FormWindowState.Minimized)
-            {
-                ShowInTaskbar = false;
-                nIcon.Visible = true;
-                if (Properties.Settings.Default.ShowMinimize == true)
-                {
-                    nIcon.BalloonTipText = "Notifier has been minimized to System Tray";
-                    nIcon.ShowBalloonTip(1000);
-                    Properties.Settings.Default.ShowMinimize = false;
-                    Properties.Settings.Default.Save();
-                }
-
-            }
+            if (WindowState != FormWindowState.Minimized) return;
+            ShowInTaskbar = false;
+            nIcon.Visible = true;
+            if (Settings.Default.ShowMinimize != true) return;
+            nIcon.BalloonTipText = V;
+            nIcon.ShowBalloonTip(1000);
+            Settings.Default.ShowMinimize = false;
+            Settings.Default.Save();
         }
 
-        private void nIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void NIcon_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             ShowInTaskbar = true;
             nIcon.Visible = false;
@@ -56,18 +48,25 @@ namespace HelpdeskDesktopNotify
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
-            NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged;
+
             WindowState = FormWindowState.Minimized;
-            userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            UserName = WindowsIdentity.GetCurrent().Name;
             MaxValue = GetLastRequestId();
             lbCalls.DisplayMember = "id";
             lbCalls.ValueMember = "id";
             lbCalls.DataSource = GetRequests();
+            if (Settings.Default.ProxyEnabled == 0)
+                enableDisableProxyToolStripMenuItem.Text = "Enable Proxy";
+            else
+                enableDisableProxyToolStripMenuItem.Text = "Disable Proxy";
 
+            if (Settings.Default.AutoChangeProxyEnabled)
+                autoChangeProxyToolStripMenuItem.Text = "Disable Auto Proxy";
+            else
+                autoChangeProxyToolStripMenuItem.Text = "Enable Auto Proxy";
 
-            lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString();
-            var timer = new System.Timers.Timer(60000);
+            lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue;
+            var timer = new Timer(60000);
 
             // Hook up the Elapsed event for the timer.
             timer.Elapsed += Timer_Elapsed;
@@ -82,7 +81,7 @@ namespace HelpdeskDesktopNotify
 
         private void NetworkChange_NetworkAddressChanged(object sender, EventArgs e)
         {
-            if (IsNetworkAvailable)
+            if (IsNetworkAvailable && Settings.Default.AutoChangeProxyEnabled)
             {
                 Proxy.SetProxy();
             }
@@ -94,24 +93,24 @@ namespace HelpdeskDesktopNotify
             lbCalls.DisplayMember = "id";
             lbCalls.ValueMember = "id";
             lbCalls.DataSource = GetRequests();
-            if (MaxValue < value && value > 0)
-            {
-                nIcon.BalloonTipText = "Call " + value + " has been assign to you. " + userName;
-                nIcon.ShowBalloonTip(5000);
-                lblMaxValue.BeginInvoke((MethodInvoker)delegate () { lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue.ToString(); ; });
-                MaxValue = value;
-            }
+            if (MaxValue >= value || value <= 0) return;
+            nIcon.BalloonTipText = "Call " + value + " has been assign to you. " + UserName;
+            nIcon.ShowBalloonTip(5000);
+            lblMaxValue.BeginInvoke((MethodInvoker)delegate
+                { lblMaxValue.Text = "Your latest Helpdesk Call is: " + MaxValue; ; });
+            MaxValue = value;
         }
 
         private int GetLastRequestId()
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
+                if (!IsNetworkAvailable || !Proxy.PingHost("10.1.1.7")) return 0;
+                using (var connection = new SqlConnection(Settings.Default.ConnectionString))
                 {
                     connection.Open();
-                    string query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "'";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    var query = "SELECT Max([id]) as Latest FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + UserName.Remove(0, 4) + "'";
+                    using (var command = new SqlCommand(query, connection))
                     {
                         return (int)command.ExecuteScalar();
                     }
@@ -127,15 +126,16 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
+                if (!IsNetworkAvailable || !Proxy.PingHost("10.1.1.7")) return null;
+                using (var connection = new SqlConnection(Settings.Default.ConnectionString))
                 {
                     connection.Open();
-                    string query = "SELECT * FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + userName.Remove(0, 4) + "' and Status <> 3 and deleted = 0 order by id";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    var query = "SELECT * FROM [RAUBEX_HELPDESK].[dbo].[REQUESTS_TBL] where responsibility = '" + UserName.Remove(0, 4) + "' and Status <> 3 and deleted = 0 order by id";
+                    using (var command = new SqlCommand(query, connection))
                     {
-                        var Data = new DataTable();
-                        Data.Load(command.ExecuteReader());
-                        return Data;
+                        var data = new DataTable();
+                        data.Load(command.ExecuteReader());
+                        return data;
                     }
                 }
             }
@@ -145,61 +145,43 @@ namespace HelpdeskDesktopNotify
             }
         }
 
-        private DataTable GetDataTable(string SQL)
+        private void NIcon_BalloonTipClicked(object sender, EventArgs e)
         {
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(Properties.Settings.Default.RAUBEX_HELPDESKConnectionString))
-                {
-                    connection.Open();
-                    string query = SQL;
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-
-                        DataTable t1 = new DataTable();
-                        using (SqlDataAdapter a = new SqlDataAdapter(command))
-                        {
-                            a.Fill(t1);
-                            return t1;
-                        }
-
-                    }
-                }
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private void nIcon_BalloonTipClicked(object sender, EventArgs e)
-        {
-            ProcessStartInfo sInfo = new ProcessStartInfo("https://helpdesk.raubex.com/Submitrequest.aspx?iREQNUMB=" + MaxValue);
+            var sInfo = new ProcessStartInfo("https://helpdesk.raubex.com/LoginB.aspx?iREQNUMB=" + MaxValue);
             Process.Start(sInfo);
         }
 
-        private void btnOpenHelpdesk_Click(object sender, EventArgs e)
+        private void BtnOpenHelpdesk_Click(object sender, EventArgs e)
         {
-            ProcessStartInfo sInfo = new ProcessStartInfo("https://helpdesk.raubex.com");
+            var sInfo = new ProcessStartInfo("https://helpdesk.raubex.com");
             Process.Start(sInfo);
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
-        private void enableProxyToolStripMenuItem_Click(object sender, EventArgs e)
+        private void EnableProxyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Proxy.SetProxy();
+            if (IsNetworkAvailable)
+                Proxy.SetProxy();
         }
 
-        private void lbCalls_SelectedIndexChanged(object sender, EventArgs e)
+        private void LbCalls_SelectedIndexChanged(object sender, EventArgs e)
         {
             txtCallNr.Text = ((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["id"].ToString();
             dtpREQ.Value = (DateTime)((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["insert_time"];
+        }
 
-            //MessageBox.Show(((DataRowView)lbCalls.Items[lbCalls.SelectedIndex])["description"].ToString());
+        private void autoChangeProxyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Settings.Default.AutoChangeProxyEnabled)
+                Settings.Default.AutoChangeProxyEnabled = false;
+            else
+                Settings.Default.AutoChangeProxyEnabled = true;
+
+            Settings.Default.Save();
         }
     }
 

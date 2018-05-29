@@ -43,6 +43,7 @@
             this.btnSearchCall = new System.Windows.Forms.Button();
             this.dtpREQ = new System.Windows.Forms.DateTimePicker();
             this.label1 = new System.Windows.Forms.Label();
+            this.autoChangeProxyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -63,7 +64,7 @@
             this.btnOpenHelpdesk.TabIndex = 1;
             this.btnOpenHelpdesk.Text = "Open Helpdesk";
             this.btnOpenHelpdesk.UseVisualStyleBackColor = true;
-            this.btnOpenHelpdesk.Click += new System.EventHandler(this.btnOpenHelpdesk_Click);
+            this.btnOpenHelpdesk.Click += new System.EventHandler(this.BtnOpenHelpdesk_Click);
             // 
             // lbCalls
             // 
@@ -72,37 +73,38 @@
             this.lbCalls.Name = "lbCalls";
             this.lbCalls.Size = new System.Drawing.Size(100, 381);
             this.lbCalls.TabIndex = 2;
-            this.lbCalls.SelectedIndexChanged += new System.EventHandler(this.lbCalls_SelectedIndexChanged);
+            this.lbCalls.SelectedIndexChanged += new System.EventHandler(this.LbCalls_SelectedIndexChanged);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
             this.exitToolStripMenuItem.Text = "Exit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
             // openHelpdeskToolStripMenuItem
             // 
             this.openHelpdeskToolStripMenuItem.Name = "openHelpdeskToolStripMenuItem";
             this.openHelpdeskToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
             this.openHelpdeskToolStripMenuItem.Text = "Open Helpdesk";
-            this.openHelpdeskToolStripMenuItem.Click += new System.EventHandler(this.btnOpenHelpdesk_Click);
+            this.openHelpdeskToolStripMenuItem.Click += new System.EventHandler(this.BtnOpenHelpdesk_Click);
             // 
             // enableDisableProxyToolStripMenuItem
             // 
             this.enableDisableProxyToolStripMenuItem.Name = "enableDisableProxyToolStripMenuItem";
             this.enableDisableProxyToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
             this.enableDisableProxyToolStripMenuItem.Text = "Enable\\Disable Proxy";
-            this.enableDisableProxyToolStripMenuItem.Click += new System.EventHandler(this.enableProxyToolStripMenuItem_Click);
+            this.enableDisableProxyToolStripMenuItem.Click += new System.EventHandler(this.EnableProxyToolStripMenuItem_Click);
             // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.exitToolStripMenuItem,
             this.openHelpdeskToolStripMenuItem,
-            this.enableDisableProxyToolStripMenuItem});
+            this.enableDisableProxyToolStripMenuItem,
+            this.autoChangeProxyToolStripMenuItem,
+            this.exitToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(185, 70);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(185, 92);
             // 
             // nIcon
             // 
@@ -112,8 +114,8 @@
             this.nIcon.ContextMenuStrip = this.contextMenuStrip1;
             this.nIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("nIcon.Icon")));
             this.nIcon.Text = "Raubex Helpdesk";
-            this.nIcon.BalloonTipClicked += new System.EventHandler(this.nIcon_BalloonTipClicked);
-            this.nIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.nIcon_MouseDoubleClick);
+            this.nIcon.BalloonTipClicked += new System.EventHandler(this.NIcon_BalloonTipClicked);
+            this.nIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.NIcon_MouseDoubleClick);
             // 
             // lblCallNr
             // 
@@ -157,11 +159,18 @@
             this.label1.TabIndex = 8;
             this.label1.Text = "Requested Date";
             // 
+            // autoChangeProxyToolStripMenuItem
+            // 
+            this.autoChangeProxyToolStripMenuItem.Name = "autoChangeProxyToolStripMenuItem";
+            this.autoChangeProxyToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.autoChangeProxyToolStripMenuItem.Text = "Auto Change Proxy";
+            this.autoChangeProxyToolStripMenuItem.Click += new System.EventHandler(this.autoChangeProxyToolStripMenuItem_Click);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(672, 562);
+            this.ClientSize = new System.Drawing.Size(424, 450);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dtpREQ);
             this.Controls.Add(this.btnSearchCall);
@@ -195,6 +204,7 @@
         private System.Windows.Forms.Button btnSearchCall;
         private System.Windows.Forms.DateTimePicker dtpREQ;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolStripMenuItem autoChangeProxyToolStripMenuItem;
     }
 }
 

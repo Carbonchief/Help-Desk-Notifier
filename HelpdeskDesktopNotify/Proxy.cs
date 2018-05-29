@@ -1,7 +1,9 @@
-﻿using Microsoft.Win32;
+﻿using HelpdeskDesktopNotify.Properties;
+using Microsoft.Win32;
 using System;
 using System.Data.SqlClient;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 namespace HelpdeskDesktopNotify
@@ -10,51 +12,56 @@ namespace HelpdeskDesktopNotify
     {
         [DllImport("wininet.dll")]
         public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);
-        public const int INTERNET_OPTION_SETTINGS_CHANGED = 39;
-        public const int INTERNET_OPTION_REFRESH = 37;
-        static bool settingsReturn, refreshReturn;
+        public const int InternetOptionSettingsChanged = 39;
+        public const int InternetOptionRefresh = 37;
+        private const string RegisteryLocation = @"Software\Microsoft\Windows\CurrentVersion\Internet Settings";
 
 
         public static void SetProxy()
         {
-            RegistryKey ProxyServer = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyServer != null)
+            var proxyServer = Registry.CurrentUser.OpenSubKey(RegisteryLocation, true);
+            if (proxyServer != null)
             {
-                ProxyServer.SetValue("ProxyServer", GetProxyServer(), RegistryValueKind.String);
-                ProxyServer.Close();
+                proxyServer.SetValue("ProxyServer", GetProxyServer(), RegistryValueKind.String);
+                proxyServer.Close();
             }
 
-            RegistryKey ProxyOverride = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyOverride != null)
+            var proxyOverride = Registry.CurrentUser.OpenSubKey(RegisteryLocation, true);
+            if (proxyOverride != null)
             {
-                ProxyOverride.SetValue("ProxyOverride", GetProxyOverride(), RegistryValueKind.String);
-                ProxyOverride.Close();
+                proxyOverride.SetValue("ProxyOverride", GetProxyOverride(), RegistryValueKind.String);
+                proxyOverride.Close();
             }
 
-            RegistryKey AutoDetect = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (AutoDetect != null)
+            var autoDetect = Registry.CurrentUser.OpenSubKey(RegisteryLocation, true);
+            if (autoDetect != null)
             {
-                AutoDetect.SetValue("AutoDetect", "0", RegistryValueKind.DWord);
-                AutoDetect.Close();
+                autoDetect.SetValue("AutoDetect", "0", RegistryValueKind.DWord);
+                autoDetect.Close();
             }
 
-            RegistryKey ProxyEnable = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true);
-            if (ProxyEnable != null)
+            //Check Which setting needs to be set
+            if (Settings.Default.ProxyEnabled == 0)
             {
-                var Enabled = ProxyEnable.GetValue("ProxyEnable").ToString();
-                if (Enabled == "0")
-                {
-                    ProxyEnable.SetValue("ProxyEnable", "1", RegistryValueKind.DWord);
-                }
-                else
-                {
-                    ProxyEnable.SetValue("ProxyEnable", "0", RegistryValueKind.DWord);
-                }
-                ProxyEnable.Close();
+                Settings.Default.ProxyEnabled = 1;
             }
-            settingsReturn = InternetSetOption(IntPtr.Zero, INTERNET_OPTION_SETTINGS_CHANGED, IntPtr.Zero, 0);
-            refreshReturn = InternetSetOption(IntPtr.Zero, INTERNET_OPTION_REFRESH, IntPtr.Zero, 0);
+            else
+                Settings.Default.ProxyEnabled = 0;
+            Settings.Default.Save();
 
+
+            var proxyEnable = Registry.CurrentUser.OpenSubKey(RegisteryLocation, true);
+            if (proxyEnable != null)
+            {
+                var enabled = proxyEnable.GetValue("ProxyEnable").ToString();
+                proxyEnable.SetValue("ProxyEnable", Settings.Default.ProxyEnabled, RegistryValueKind.DWord);
+                proxyEnable.Close();
+            }
+
+
+
+            InternetSetOption(IntPtr.Zero, InternetOptionSettingsChanged, IntPtr.Zero, 0);
+            InternetSetOption(IntPtr.Zero, InternetOptionRefresh, IntPtr.Zero, 0);
 
         }
 
@@ -65,59 +72,89 @@ namespace HelpdeskDesktopNotify
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                if (PingHost("10.1.1.7"))
                 {
-                    connection.Open();
-                    string query = "SELECT [pProxyAddress] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIP() + "'";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (var connection = new SqlConnection(Settings.Default.ConnectionString))
                     {
-                        var ProxyServer = (string)command.ExecuteScalar();
-                        return ProxyServer;
+                        connection.Open();
+                        var query = "SELECT [pProxyAddress] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIp() + "'";
+                        using (var command = new SqlCommand(query, connection))
+                        {
+                            var proxyServer = (string)command.ExecuteScalar();
+                            return proxyServer;
+                        }
                     }
+                }
+                else
+                {
+                    return @"02RX-Proxy01.rbx.raubex.com:8080";
                 }
             }
             catch
             {
-                return null;
+                return @"02RX-Proxy01.rbx.raubex.com:8080";
             }
-
-
-            //return @"02RX-Proxy01.rbx.raubex.com:8080";
         }
 
-        private static string GetIP()
+        private static string GetIp()
         {
-            string LocalIP = "";
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            string localIp;
+            using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
             {
                 socket.Connect("8.8.8.8", 65530);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                LocalIP = endPoint.Address.ToString();
+                var endPoint = socket.LocalEndPoint as IPEndPoint;
+                localIp = endPoint.Address.ToString();
             }
 
-            var IpOctets = LocalIP.Split('.');
-            return IpOctets[0] + "." + IpOctets[1];
+            var ipOctets = localIp.Split('.');
+            return ipOctets[0] + "." + ipOctets[1];
         }
 
         private static string GetProxyOverride()
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection("Server=10.1.1.7;Database=RAUBEX_HELPDESK;Trusted_Connection=True;"))
+                if (PingHost("10.1.1.7"))
                 {
-                    connection.Open();
-                    string query = "SELECT [pProxyOveride] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIP() + "'";
-                    using (SqlCommand command = new SqlCommand(query, connection))
+                    using (var connection = new SqlConnection(Settings.Default.ConnectionString))
                     {
-                        var ProxyOveride = (string)command.ExecuteScalar();
-                        return ProxyOveride;
+                        connection.Open();
+                        var query = "SELECT [pProxyOveride] FROM [RAUBEX_HELPDESK].[dbo].[ProxyList] where pip =  '" + GetIp() + "'";
+                        using (var command = new SqlCommand(query, connection))
+                        {
+                            var proxyOveride = (string)command.ExecuteScalar();
+                            if (Settings.Default.BypassLocal == true)
+                                return proxyOveride + ";<value>";
+                            else
+                                return proxyOveride;
+                        }
                     }
                 }
+                else
+                {
+                    return "*rx*;*.raubex.*;10.*.*.*";
+                }
             }
-            catch(Exception ex)
+            catch (Exception)
             {
                 return "*rx*;*.raubex.*;10.*.*.*";
             }
+        }
+
+        public static bool PingHost(string nameOrAddress)
+        {
+            bool pingable = false;
+            Ping pinger = new Ping();
+            try
+            {
+                PingReply reply = pinger.Send(nameOrAddress);
+                pingable = reply.Status == IPStatus.Success;
+            }
+            catch (PingException)
+            {
+                // Discard PingExceptions and return false;
+            }
+            return pingable;
         }
 
     }
