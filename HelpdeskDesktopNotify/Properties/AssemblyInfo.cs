@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Help-Desk Desktop Notifier")]
-[assembly: AssemblyDescription("This app give notifications to the user when new calls are assigned")]
+[assembly: AssemblyDescription("This app gives notifications to the user when new calls are assigned")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Raubex PTY")]
 [assembly: AssemblyProduct("Help-Desk Desktop Notifier")]
